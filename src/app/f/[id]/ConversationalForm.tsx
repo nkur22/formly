@@ -330,5 +330,37 @@ function QuestionInput({
     );
   }
 
+  if (type === "likert") {
+    const labels = (settings?.labels as string[]) ?? [
+      "Strongly Disagree",
+      "Disagree",
+      "Neutral",
+      "Agree",
+      "Strongly Agree",
+    ];
+    return (
+      <div className="flex flex-col gap-2">
+        {labels.map((label, i) => (
+          <button
+            key={label}
+            onClick={() => {
+              onChange(label);
+              setTimeout(onEnter, 150);
+            }}
+            className={cn(
+              "w-full text-left px-4 py-3 rounded-xl border-2 text-base transition-all flex items-center gap-3",
+              value === label
+                ? "border-primary bg-primary/5 text-primary font-medium"
+                : "border-gray-200 hover:border-primary"
+            )}
+          >
+            <span className="text-sm text-gray-400 w-4 shrink-0">{i + 1}</span>
+            {label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return null;
 }
