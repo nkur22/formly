@@ -37,6 +37,7 @@ type QuestionType =
   | "multiple_choice"
   | "yes_no"
   | "rating"
+  | "likert"
   | "email"
   | "number"
   | "date";
@@ -64,6 +65,7 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   multiple_choice: "Multiple choice",
   yes_no: "Yes / No",
   rating: "Rating",
+  likert: "Likert",
   email: "Email",
   number: "Number",
   date: "Date",
@@ -75,6 +77,7 @@ const TYPE_ICONS: Record<QuestionType, React.ReactNode> = {
   multiple_choice: <List className="size-4" />,
   yes_no: <ToggleLeft className="size-4" />,
   rating: <Star className="size-4" />,
+  likert: <Star className="size-4" />,
   email: <Mail className="size-4" />,
   number: <Hash className="size-4" />,
   date: <Calendar className="size-4" />,
@@ -323,6 +326,36 @@ export default function FormBuilder({
                       >
                         1 – {max}
                       </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Likert labels */}
+              {selected.type === "likert" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Scale labels
+                  </label>
+                  <div className="space-y-2">
+                    {(
+                      (selected.settings?.labels as string[]) ??
+                      ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+                    ).map((label, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-4 shrink-0">{i + 1}</span>
+                        <Input
+                          value={label}
+                          onChange={(e) => {
+                            const labels = [
+                              ...((selected.settings?.labels as string[]) ??
+                                ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]),
+                            ];
+                            labels[i] = e.target.value;
+                            handleUpdateField("settings", { ...selected.settings, labels });
+                          }}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>

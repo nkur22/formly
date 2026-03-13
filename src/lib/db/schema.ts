@@ -72,6 +72,7 @@ export const questionTypeEnum = pgEnum("question_type", [
   "multiple_choice",
   "yes_no",
   "rating",
+  "likert",
   "email",
   "number",
   "date",
