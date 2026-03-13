@@ -9,7 +9,13 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
-export default function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-sm">
@@ -18,6 +24,11 @@ export default function SignUpPage() {
           <CardDescription>Get started with Formly for free</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          {error === "email-in-use" && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              An account with that email already exists.
+            </p>
+          )}
           <form
             action={async (formData: FormData) => {
               "use server";
@@ -26,7 +37,7 @@ export default function SignUpPage() {
               const password = formData.get("password") as string;
 
               const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
-              if (existing) throw new Error("Email already in use");
+              if (existing) redirect("/sign-up?error=email-in-use");
 
               const hashed = await bcrypt.hash(password, 12);
               await db.insert(users).values({ name, email, password: hashed });
