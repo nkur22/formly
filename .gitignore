@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# browser test artifacts
+tmp/
+*.png
+
+# claude
+.claude/settings.local.json
+.claude/worktrees/

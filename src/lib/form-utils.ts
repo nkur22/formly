@@ -1,12 +1,4 @@
-type QuestionType =
-  | "short_text"
-  | "long_text"
-  | "multiple_choice"
-  | "yes_no"
-  | "rating"
-  | "email"
-  | "number"
-  | "date";
+import type { QuestionType } from "./types";
 
 type Question = {
   id: string;
@@ -15,5 +7,5 @@ type Question = {
 };
 
 export function hasLikertQuestion(questions: Question[]): boolean {
-  return questions.some((q) => q.type === "rating");
+  return questions.some((q) => q.type === "likert");
 }

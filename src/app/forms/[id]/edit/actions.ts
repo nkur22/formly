@@ -14,6 +14,15 @@ async function verifyOwnership(formId: string, userId: string) {
   return form;
 }
 
+export async function updateFormCover(formId: string, coverImage: string | null) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  await verifyOwnership(formId, session.user.id);
+
+  await db.update(forms).set({ coverImage, updatedAt: new Date() }).where(eq(forms.id, formId));
+  revalidatePath(`/forms/${formId}/edit`);
+}
+
 export async function updateFormTitle(formId: string, title: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -48,22 +57,23 @@ export async function addQuestion(formId: string, order: number) {
   return question;
 }
 
+type UpdateableQuestionData = Partial<
+  Pick<typeof questions.$inferInsert, "title" | "type" | "required" | "settings">
+>;
+
 export async function updateQuestion(
   formId: string,
   questionId: string,
-  data: Partial<{
-    title: string;
-    type: "short_text" | "long_text" | "multiple_choice" | "yes_no" | "rating" | "email" | "number" | "date";
-    required: boolean;
-    settings: Record<string, unknown>;
-  }>
+  data: UpdateableQuestionData
 ) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
   await verifyOwnership(formId, session.user.id);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await db.update(questions).set(data as any).where(and(eq(questions.id, questionId), eq(questions.formId, formId)));
+  await db
+    .update(questions)
+    .set(data)
+    .where(and(eq(questions.id, questionId), eq(questions.formId, formId)));
 
   revalidatePath(`/forms/${formId}/edit`);
 }

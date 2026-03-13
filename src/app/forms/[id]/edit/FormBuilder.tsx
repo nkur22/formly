@@ -10,6 +10,7 @@ import {
   deleteQuestion,
   reorderQuestions,
   togglePublished,
+  updateFormCover,
   updateFormTitle,
   updateQuestion,
 } from "./actions";
@@ -24,23 +25,14 @@ import {
   List,
   Mail,
   Plus,
+  Sliders,
   Star,
   ToggleLeft,
   Trash2,
   Type,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type QuestionType =
-  | "short_text"
-  | "long_text"
-  | "multiple_choice"
-  | "yes_no"
-  | "rating"
-  | "likert"
-  | "email"
-  | "number"
-  | "date";
+import { QUESTION_TYPES, type QuestionType } from "@/lib/types";
 
 type Question = {
   id: string;
@@ -57,6 +49,7 @@ type Form = {
   id: string;
   title: string;
   published: boolean;
+  coverImage: string | null;
 };
 
 const TYPE_LABELS: Record<QuestionType, string> = {
@@ -65,7 +58,7 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   multiple_choice: "Multiple choice",
   yes_no: "Yes / No",
   rating: "Rating",
-  likert: "Likert",
+  likert: "Likert scale",
   email: "Email",
   number: "Number",
   date: "Date",
@@ -77,7 +70,7 @@ const TYPE_ICONS: Record<QuestionType, React.ReactNode> = {
   multiple_choice: <List className="size-4" />,
   yes_no: <ToggleLeft className="size-4" />,
   rating: <Star className="size-4" />,
-  likert: <Star className="size-4" />,
+  likert: <Sliders className="size-4" />,
   email: <Mail className="size-4" />,
   number: <Hash className="size-4" />,
   date: <Calendar className="size-4" />,
@@ -92,6 +85,7 @@ export default function FormBuilder({
 }) {
   const [title, setTitle] = useState(form.title);
   const [published, setPublished] = useState(form.published);
+  const [coverImage, setCoverImage] = useState<string>(form.coverImage ?? "");
   const [qs, setQs] = useState<Question[]>(initialQuestions);
   const [selectedId, setSelectedId] = useState<string | null>(qs[0]?.id ?? null);
   const [, startTransition] = useTransition();
@@ -100,6 +94,11 @@ export default function FormBuilder({
 
   function handleTitleBlur() {
     startTransition(() => updateFormTitle(form.id, title));
+  }
+
+  function handleCoverBlur() {
+    const val = coverImage.trim() || null;
+    startTransition(() => updateFormCover(form.id, val));
   }
 
   function handleTogglePublish() {
@@ -134,32 +133,53 @@ export default function FormBuilder({
     startTransition(() => reorderQuestions(form.id, reordered.map((q) => q.id)));
   }
 
-  function handleUpdateField(field: keyof Question, value: unknown) {
+  function handleUpdateTitle(title: string) {
     if (!selected) return;
-    const updated = { ...selected, [field]: value };
-    setQs((prev) => prev.map((q) => (q.id === selected.id ? updated : q)));
-    startTransition(() =>
-      updateQuestion(form.id, selected.id, { [field]: value } as Parameters<typeof updateQuestion>[2])
-    );
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, title } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { title }));
+  }
+
+  function handleUpdateType(type: QuestionType) {
+    if (!selected) return;
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, type } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { type }));
+  }
+
+  function handleUpdateRequired(required: boolean) {
+    if (!selected) return;
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, required } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { required }));
+  }
+
+  function handleUpdateSettings(settings: Record<string, unknown>) {
+    if (!selected) return;
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, settings } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { settings }));
   }
 
   function handleOptionChange(index: number, value: string) {
     if (!selected) return;
-    const opts = ((selected.settings?.options as string[]) ?? []).slice();
+    const opts = Array.isArray(selected.settings?.options)
+      ? (selected.settings.options as string[]).slice()
+      : [];
     opts[index] = value;
-    handleUpdateField("settings", { ...selected.settings, options: opts });
+    handleUpdateSettings({ ...selected.settings, options: opts });
   }
 
   function handleAddOption() {
     if (!selected) return;
-    const opts = ((selected.settings?.options as string[]) ?? []);
-    handleUpdateField("settings", { ...selected.settings, options: [...opts, ""] });
+    const opts = Array.isArray(selected.settings?.options)
+      ? (selected.settings.options as string[])
+      : [];
+    handleUpdateSettings({ ...selected.settings, options: [...opts, ""] });
   }
 
   function handleRemoveOption(index: number) {
     if (!selected) return;
-    const opts = ((selected.settings?.options as string[]) ?? []).filter((_, i) => i !== index);
-    handleUpdateField("settings", { ...selected.settings, options: opts });
+    const opts = Array.isArray(selected.settings?.options)
+      ? (selected.settings.options as string[]).filter((_, i) => i !== index)
+      : [];
+    handleUpdateSettings({ ...selected.settings, options: opts });
   }
 
   return (
@@ -227,6 +247,32 @@ export default function FormBuilder({
 
         {/* Editor panel */}
         <main className="flex-1 overflow-y-auto p-8">
+          {/* Cover image — always visible form-level setting */}
+          <div className="max-w-xl mx-auto mb-6 bg-white border rounded-xl p-6 space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Cover image (optional)
+              </label>
+              <Input
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                onBlur={handleCoverBlur}
+                placeholder="https://example.com/banner.jpg"
+                className="h-9 text-sm"
+              />
+            </div>
+            {coverImage.trim() && (
+              <div className="rounded-lg overflow-hidden border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={coverImage}
+                  alt="Cover preview"
+                  className="w-full h-32 object-cover"
+                />
+              </div>
+            )}
+          </div>
+
           {!selected ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
               <p>No questions yet</p>
@@ -242,10 +288,10 @@ export default function FormBuilder({
                   Question type
                 </label>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {(Object.keys(TYPE_LABELS) as QuestionType[]).map((type) => (
+                  {QUESTION_TYPES.map((type) => (
                     <button
                       key={type}
-                      onClick={() => handleUpdateField("type", type)}
+                      onClick={() => handleUpdateType(type)}
                       className={cn(
                         "flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-colors",
                         selected.type === type
@@ -267,7 +313,7 @@ export default function FormBuilder({
                 </label>
                 <Input
                   value={selected.title}
-                  onChange={(e) => handleUpdateField("title", e.target.value)}
+                  onChange={(e) => handleUpdateTitle(e.target.value)}
                   placeholder="Enter your question..."
                   className="text-base h-10"
                 />
@@ -280,7 +326,7 @@ export default function FormBuilder({
                     Options
                   </label>
                   <div className="space-y-2">
-                    {((selected.settings?.options as string[]) ?? []).map((opt, i) => (
+                    {(Array.isArray(selected.settings?.options) ? (selected.settings.options as string[]) : []).map((opt, i) => (
                       <div key={i} className="flex gap-2">
                         <Input
                           value={opt}
@@ -315,7 +361,7 @@ export default function FormBuilder({
                       <button
                         key={max}
                         onClick={() =>
-                          handleUpdateField("settings", { ...selected.settings, max })
+                          handleUpdateSettings({ ...selected.settings, max })
                         }
                         className={cn(
                           "px-4 py-1.5 rounded-lg border text-sm transition-colors",
@@ -339,20 +385,20 @@ export default function FormBuilder({
                   </label>
                   <div className="space-y-2">
                     {(
-                      (selected.settings?.labels as string[]) ??
-                      ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+                      Array.isArray(selected.settings?.labels)
+                        ? (selected.settings.labels as string[])
+                        : ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
                     ).map((label, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <span className="text-xs text-gray-400 w-4 shrink-0">{i + 1}</span>
                         <Input
                           value={label}
                           onChange={(e) => {
-                            const labels = [
-                              ...((selected.settings?.labels as string[]) ??
-                                ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]),
-                            ];
+                            const labels = Array.isArray(selected.settings?.labels)
+                              ? [...(selected.settings.labels as string[])]
+                              : ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
                             labels[i] = e.target.value;
-                            handleUpdateField("settings", { ...selected.settings, labels });
+                            handleUpdateSettings({ ...selected.settings, labels });
                           }}
                         />
                       </div>
@@ -365,7 +411,7 @@ export default function FormBuilder({
               <div className="flex items-center justify-between pt-2 border-t">
                 <span className="text-sm font-medium">Required</span>
                 <button
-                  onClick={() => handleUpdateField("required", !selected.required)}
+                  onClick={() => handleUpdateRequired(!selected.required)}
                   className={cn(
                     "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
                     selected.required ? "bg-primary" : "bg-gray-200"

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import Link from "next/link";
 import { createForm, deleteForm } from "./actions";
+import { DashboardHeader } from "./DashboardHeader";
 import { BarChart2, ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -54,9 +55,7 @@ export default async function DashboardPage() {
       <main className="max-w-5xl mx-auto px-8 py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold">My Forms</h1>
-          <form action={createForm}>
-            <Button type="submit">+ New form</Button>
-          </form>
+          <DashboardHeader />
         </div>
 
         {userForms.length === 0 ? (

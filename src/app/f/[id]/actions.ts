@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { answers, responses } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function createResponse(formId: string, respondentId: string) {
   const [response] = await db
@@ -13,12 +13,14 @@ export async function createResponse(formId: string, respondentId: string) {
 }
 
 export async function saveAnswer(responseId: string, questionId: string, value: string) {
-  // Upsert: delete existing answer then insert
+  // Atomic upsert — avoids lost answer between the old delete+insert pattern
   await db
-    .delete(answers)
-    .where(and(eq(answers.responseId, responseId), eq(answers.questionId, questionId)));
-
-  await db.insert(answers).values({ responseId, questionId, value });
+    .insert(answers)
+    .values({ responseId, questionId, value })
+    .onConflictDoUpdate({
+      target: [answers.responseId, answers.questionId],
+      set: { value },
+    });
 }
 
 export async function completeResponse(responseId: string) {

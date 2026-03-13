@@ -87,6 +87,7 @@ export const forms = pgTable("form", {
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull().default("Untitled Form"),
   description: text("description"),
+  coverImage: text("coverImage"),
   published: boolean("published").notNull().default(false),
   createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
