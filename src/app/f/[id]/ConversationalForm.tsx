@@ -30,6 +30,7 @@ type Form = {
   id: string;
   title: string;
   description: string | null;
+  coverImage: string | null;
 };
 
 type State = "intro" | "questions" | "thankyou";
@@ -117,15 +118,27 @@ export default function ConversationalForm({
 
   if (state === "intro") {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center gap-6">
-        <h1 className="text-4xl font-bold max-w-xl">{form.title}</h1>
-        {form.description && (
-          <p className="text-gray-500 text-lg max-w-md">{form.description}</p>
+      <div className="min-h-screen bg-white flex flex-col">
+        {form.coverImage && (
+          <div className="w-full" style={{ height: "280px" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={form.coverImage}
+              alt="Form banner"
+              className="w-full h-full object-cover"
+            />
+          </div>
         )}
-        <Button size="lg" onClick={start}>
-          Start <ChevronRight className="size-4" />
-        </Button>
-        <p className="text-xs text-gray-400">{questions.length} question{questions.length !== 1 ? "s" : ""}</p>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-6">
+          <h1 className="text-4xl font-bold max-w-xl">{form.title}</h1>
+          {form.description && (
+            <p className="text-gray-500 text-lg max-w-md">{form.description}</p>
+          )}
+          <Button size="lg" onClick={start}>
+            Start <ChevronRight className="size-4" />
+          </Button>
+          <p className="text-xs text-gray-400">{questions.length} question{questions.length !== 1 ? "s" : ""}</p>
+        </div>
       </div>
     );
   }
@@ -183,7 +196,7 @@ export default function ConversationalForm({
           />
 
           {/* OK button (not shown for auto-advance types) */}
-          {!["yes_no", "multiple_choice", "rating"].includes(current.type) && (
+          {!["yes_no", "multiple_choice", "rating", "likert"].includes(current.type) && (
             <div className="mt-6 flex items-center gap-3">
               <Button onClick={advance} disabled={!canAdvance}>
                 {currentIndex >= questions.length - 1 ? "Submit" : "OK"}

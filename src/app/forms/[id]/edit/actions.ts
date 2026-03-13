@@ -14,6 +14,15 @@ async function verifyOwnership(formId: string, userId: string) {
   return form;
 }
 
+export async function updateFormCover(formId: string, coverImage: string | null) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  await verifyOwnership(formId, session.user.id);
+
+  await db.update(forms).set({ coverImage, updatedAt: new Date() }).where(eq(forms.id, formId));
+  revalidatePath(`/forms/${formId}/edit`);
+}
+
 export async function updateFormTitle(formId: string, title: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -53,7 +62,7 @@ export async function updateQuestion(
   questionId: string,
   data: Partial<{
     title: string;
-    type: "short_text" | "long_text" | "multiple_choice" | "yes_no" | "rating" | "email" | "number" | "date";
+    type: "short_text" | "long_text" | "multiple_choice" | "yes_no" | "rating" | "likert" | "email" | "number" | "date";
     required: boolean;
     settings: Record<string, unknown>;
   }>
