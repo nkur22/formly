@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { anthropic } from "@/lib/anthropic";
 import { db } from "@/lib/db";
 import { forms, questions } from "@/lib/db/schema";
-import type { QuestionType } from "@/lib/types";
+import { QUESTION_TYPES, type QuestionType } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 // Longer timeout needed — Claude can take 15-30s for complex forms
@@ -23,6 +23,9 @@ Rules:
 - Do not add questions not clearly implied by the request
 - Always call generate_form — never respond with plain text`;
 
+// Note: the enum array below intentionally mirrors QUESTION_TYPES from @/lib/types.
+// It cannot be derived at runtime because this goes to the Anthropic API as a plain JSON object.
+// If you add a question type to QUESTION_TYPES, update this enum too.
 const GENERATE_FORM_TOOL: Parameters<typeof anthropic.messages.create>[0]["tools"] = [
   {
     name: "generate_form",
@@ -76,6 +79,36 @@ type GeneratedForm = {
   description?: string;
   questions: GeneratedQuestion[];
 };
+
+// Clamp AI-provided settings to prevent unbounded values reaching the DB.
+// e.g. rating with max=9999 would freeze the browser rendering thousands of stars.
+function sanitizeSettings(
+  type: string,
+  settings: Record<string, unknown> | null
+): Record<string, unknown> | null {
+  if (!settings) return null;
+  if (type === "multiple_choice") {
+    return {
+      ...settings,
+      options: Array.isArray(settings.options)
+        ? (settings.options as string[]).slice(0, 6)
+        : [],
+    };
+  }
+  if (type === "rating") {
+    const max = settings.max;
+    return { ...settings, max: max === 10 ? 10 : 5 };
+  }
+  if (type === "likert") {
+    return {
+      ...settings,
+      labels: Array.isArray(settings.labels)
+        ? (settings.labels as string[]).slice(0, 5)
+        : ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"],
+    };
+  }
+  return settings;
+}
 
 export async function POST(req: NextRequest) {
   // Auth check FIRST — middleware does not cover /api/ai/* routes
@@ -132,10 +165,8 @@ export async function POST(req: NextRequest) {
         })
         .returning({ id: forms.id });
 
-      const validTypes = new Set<string>([
-        "short_text", "long_text", "multiple_choice", "yes_no",
-        "rating", "likert", "email", "number", "date",
-      ]);
+      // Derive from QUESTION_TYPES so this stays in sync automatically
+      const validTypes = new Set<string>(QUESTION_TYPES);
 
       const questionRows = (generated.questions ?? [])
         .slice(0, 20)
@@ -147,7 +178,7 @@ export async function POST(req: NextRequest) {
           description: q.description?.slice(0, 1000),
           required: q.required ?? false,
           order: i,
-          settings: q.settings ?? null,
+          settings: sanitizeSettings(q.type, q.settings ?? null),
         }));
 
       if (questionRows.length > 0) {

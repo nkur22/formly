@@ -159,20 +159,26 @@ export default function FormBuilder({
 
   function handleOptionChange(index: number, value: string) {
     if (!selected) return;
-    const opts = ((selected.settings?.options as string[]) ?? []).slice();
+    const opts = Array.isArray(selected.settings?.options)
+      ? (selected.settings.options as string[]).slice()
+      : [];
     opts[index] = value;
     handleUpdateSettings({ ...selected.settings, options: opts });
   }
 
   function handleAddOption() {
     if (!selected) return;
-    const opts = (selected.settings?.options as string[]) ?? [];
+    const opts = Array.isArray(selected.settings?.options)
+      ? (selected.settings.options as string[])
+      : [];
     handleUpdateSettings({ ...selected.settings, options: [...opts, ""] });
   }
 
   function handleRemoveOption(index: number) {
     if (!selected) return;
-    const opts = ((selected.settings?.options as string[]) ?? []).filter((_, i) => i !== index);
+    const opts = Array.isArray(selected.settings?.options)
+      ? (selected.settings.options as string[]).filter((_, i) => i !== index)
+      : [];
     handleUpdateSettings({ ...selected.settings, options: opts });
   }
 
@@ -320,7 +326,7 @@ export default function FormBuilder({
                     Options
                   </label>
                   <div className="space-y-2">
-                    {((selected.settings?.options as string[]) ?? []).map((opt, i) => (
+                    {(Array.isArray(selected.settings?.options) ? (selected.settings.options as string[]) : []).map((opt, i) => (
                       <div key={i} className="flex gap-2">
                         <Input
                           value={opt}
@@ -379,18 +385,18 @@ export default function FormBuilder({
                   </label>
                   <div className="space-y-2">
                     {(
-                      (selected.settings?.labels as string[]) ??
-                      ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+                      Array.isArray(selected.settings?.labels)
+                        ? (selected.settings.labels as string[])
+                        : ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
                     ).map((label, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <span className="text-xs text-gray-400 w-4 shrink-0">{i + 1}</span>
                         <Input
                           value={label}
                           onChange={(e) => {
-                            const labels = [
-                              ...((selected.settings?.labels as string[]) ??
-                                ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]),
-                            ];
+                            const labels = Array.isArray(selected.settings?.labels)
+                              ? [...(selected.settings.labels as string[])]
+                              : ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
                             labels[i] = e.target.value;
                             handleUpdateSettings({ ...selected.settings, labels });
                           }}
