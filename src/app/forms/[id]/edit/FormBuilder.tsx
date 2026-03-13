@@ -10,6 +10,7 @@ import {
   deleteQuestion,
   reorderQuestions,
   togglePublished,
+  updateFormCover,
   updateFormTitle,
   updateQuestion,
 } from "./actions";
@@ -58,6 +59,7 @@ type Form = {
   id: string;
   title: string;
   published: boolean;
+  coverImage: string | null;
 };
 
 const TYPE_LABELS: Record<QuestionType, string> = {
@@ -93,6 +95,7 @@ export default function FormBuilder({
 }) {
   const [title, setTitle] = useState(form.title);
   const [published, setPublished] = useState(form.published);
+  const [coverImage, setCoverImage] = useState<string>(form.coverImage ?? "");
   const [qs, setQs] = useState<Question[]>(initialQuestions);
   const [selectedId, setSelectedId] = useState<string | null>(qs[0]?.id ?? null);
   const [, startTransition] = useTransition();
@@ -101,6 +104,11 @@ export default function FormBuilder({
 
   function handleTitleBlur() {
     startTransition(() => updateFormTitle(form.id, title));
+  }
+
+  function handleCoverBlur() {
+    const val = coverImage.trim() || null;
+    startTransition(() => updateFormCover(form.id, val));
   }
 
   function handleTogglePublish() {
@@ -228,6 +236,32 @@ export default function FormBuilder({
 
         {/* Editor panel */}
         <main className="flex-1 overflow-y-auto p-8">
+          {/* Cover image — always visible form-level setting */}
+          <div className="max-w-xl mx-auto mb-6 bg-white border rounded-xl p-6 space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Cover image (optional)
+              </label>
+              <Input
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                onBlur={handleCoverBlur}
+                placeholder="https://example.com/banner.jpg"
+                className="h-9 text-sm"
+              />
+            </div>
+            {coverImage.trim() && (
+              <div className="rounded-lg overflow-hidden border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={coverImage}
+                  alt="Cover preview"
+                  className="w-full h-32 object-cover"
+                />
+              </div>
+            )}
+          </div>
+
           {!selected ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
               <p>No questions yet</p>

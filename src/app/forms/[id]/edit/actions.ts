@@ -14,6 +14,15 @@ async function verifyOwnership(formId: string, userId: string) {
   return form;
 }
 
+export async function updateFormCover(formId: string, coverImage: string | null) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  await verifyOwnership(formId, session.user.id);
+
+  await db.update(forms).set({ coverImage, updatedAt: new Date() }).where(eq(forms.id, formId));
+  revalidatePath(`/forms/${formId}/edit`);
+}
+
 export async function updateFormTitle(formId: string, title: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
