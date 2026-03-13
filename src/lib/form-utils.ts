@@ -1,13 +1,4 @@
-type QuestionType =
-  | "short_text"
-  | "long_text"
-  | "multiple_choice"
-  | "yes_no"
-  | "rating"
-  | "likert"
-  | "email"
-  | "number"
-  | "date";
+import type { QuestionType } from "./types";
 
 type Question = {
   id: string;

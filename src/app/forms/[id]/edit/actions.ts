@@ -57,22 +57,23 @@ export async function addQuestion(formId: string, order: number) {
   return question;
 }
 
+type UpdateableQuestionData = Partial<
+  Pick<typeof questions.$inferInsert, "title" | "type" | "required" | "settings">
+>;
+
 export async function updateQuestion(
   formId: string,
   questionId: string,
-  data: Partial<{
-    title: string;
-    type: "short_text" | "long_text" | "multiple_choice" | "yes_no" | "rating" | "likert" | "email" | "number" | "date";
-    required: boolean;
-    settings: Record<string, unknown>;
-  }>
+  data: UpdateableQuestionData
 ) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
   await verifyOwnership(formId, session.user.id);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await db.update(questions).set(data as any).where(and(eq(questions.id, questionId), eq(questions.formId, formId)));
+  await db
+    .update(questions)
+    .set(data)
+    .where(and(eq(questions.id, questionId), eq(questions.formId, formId)));
 
   revalidatePath(`/forms/${formId}/edit`);
 }

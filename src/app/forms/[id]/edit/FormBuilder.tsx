@@ -32,17 +32,7 @@ import {
   Type,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type QuestionType =
-  | "short_text"
-  | "long_text"
-  | "multiple_choice"
-  | "yes_no"
-  | "rating"
-  | "likert"
-  | "email"
-  | "number"
-  | "date";
+import { QUESTION_TYPES, type QuestionType } from "@/lib/types";
 
 type Question = {
   id: string;
@@ -143,32 +133,47 @@ export default function FormBuilder({
     startTransition(() => reorderQuestions(form.id, reordered.map((q) => q.id)));
   }
 
-  function handleUpdateField(field: keyof Question, value: unknown) {
+  function handleUpdateTitle(title: string) {
     if (!selected) return;
-    const updated = { ...selected, [field]: value };
-    setQs((prev) => prev.map((q) => (q.id === selected.id ? updated : q)));
-    startTransition(() =>
-      updateQuestion(form.id, selected.id, { [field]: value } as Parameters<typeof updateQuestion>[2])
-    );
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, title } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { title }));
+  }
+
+  function handleUpdateType(type: QuestionType) {
+    if (!selected) return;
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, type } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { type }));
+  }
+
+  function handleUpdateRequired(required: boolean) {
+    if (!selected) return;
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, required } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { required }));
+  }
+
+  function handleUpdateSettings(settings: Record<string, unknown>) {
+    if (!selected) return;
+    setQs((prev) => prev.map((q) => (q.id === selected.id ? { ...q, settings } : q)));
+    startTransition(() => updateQuestion(form.id, selected.id, { settings }));
   }
 
   function handleOptionChange(index: number, value: string) {
     if (!selected) return;
     const opts = ((selected.settings?.options as string[]) ?? []).slice();
     opts[index] = value;
-    handleUpdateField("settings", { ...selected.settings, options: opts });
+    handleUpdateSettings({ ...selected.settings, options: opts });
   }
 
   function handleAddOption() {
     if (!selected) return;
-    const opts = ((selected.settings?.options as string[]) ?? []);
-    handleUpdateField("settings", { ...selected.settings, options: [...opts, ""] });
+    const opts = (selected.settings?.options as string[]) ?? [];
+    handleUpdateSettings({ ...selected.settings, options: [...opts, ""] });
   }
 
   function handleRemoveOption(index: number) {
     if (!selected) return;
     const opts = ((selected.settings?.options as string[]) ?? []).filter((_, i) => i !== index);
-    handleUpdateField("settings", { ...selected.settings, options: opts });
+    handleUpdateSettings({ ...selected.settings, options: opts });
   }
 
   return (
@@ -277,10 +282,10 @@ export default function FormBuilder({
                   Question type
                 </label>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {(Object.keys(TYPE_LABELS) as QuestionType[]).map((type) => (
+                  {QUESTION_TYPES.map((type) => (
                     <button
                       key={type}
-                      onClick={() => handleUpdateField("type", type)}
+                      onClick={() => handleUpdateType(type)}
                       className={cn(
                         "flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-colors",
                         selected.type === type
@@ -302,7 +307,7 @@ export default function FormBuilder({
                 </label>
                 <Input
                   value={selected.title}
-                  onChange={(e) => handleUpdateField("title", e.target.value)}
+                  onChange={(e) => handleUpdateTitle(e.target.value)}
                   placeholder="Enter your question..."
                   className="text-base h-10"
                 />
@@ -350,7 +355,7 @@ export default function FormBuilder({
                       <button
                         key={max}
                         onClick={() =>
-                          handleUpdateField("settings", { ...selected.settings, max })
+                          handleUpdateSettings({ ...selected.settings, max })
                         }
                         className={cn(
                           "px-4 py-1.5 rounded-lg border text-sm transition-colors",
@@ -387,7 +392,7 @@ export default function FormBuilder({
                                 ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]),
                             ];
                             labels[i] = e.target.value;
-                            handleUpdateField("settings", { ...selected.settings, labels });
+                            handleUpdateSettings({ ...selected.settings, labels });
                           }}
                         />
                       </div>
@@ -400,7 +405,7 @@ export default function FormBuilder({
               <div className="flex items-center justify-between pt-2 border-t">
                 <span className="text-sm font-medium">Required</span>
                 <button
-                  onClick={() => handleUpdateField("required", !selected.required)}
+                  onClick={() => handleUpdateRequired(!selected.required)}
                   className={cn(
                     "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
                     selected.required ? "bg-primary" : "bg-gray-200"

@@ -6,17 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp, Check, ChevronRight } from "lucide-react";
 import { completeResponse, createResponse, saveAnswer } from "./actions";
-
-type QuestionType =
-  | "short_text"
-  | "long_text"
-  | "multiple_choice"
-  | "yes_no"
-  | "rating"
-  | "likert"
-  | "email"
-  | "number"
-  | "date";
+import type { QuestionType } from "@/lib/types";
 
 type Question = {
   id: string;
