@@ -13,6 +13,7 @@ type QuestionType =
   | "multiple_choice"
   | "yes_no"
   | "rating"
+  | "likert"
   | "email"
   | "number"
   | "date";
@@ -182,7 +183,7 @@ export default function ConversationalForm({
           />
 
           {/* OK button (not shown for auto-advance types) */}
-          {!["yes_no", "multiple_choice", "rating"].includes(current.type) && (
+          {!["yes_no", "multiple_choice", "rating", "likert"].includes(current.type) && (
             <div className="mt-6 flex items-center gap-3">
               <Button onClick={advance} disabled={!canAdvance}>
                 {currentIndex >= questions.length - 1 ? "Submit" : "OK"}
@@ -326,6 +327,35 @@ function QuestionInput({
             {n}
           </button>
         ))}
+      </div>
+    );
+  }
+
+  if (type === "likert") {
+    const labels = ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
+    return (
+      <div className="flex gap-2 justify-between">
+        {labels.map((label, i) => {
+          const val = String(i + 1);
+          return (
+            <button
+              key={val}
+              onClick={() => {
+                onChange(val);
+                setTimeout(onEnter, 150);
+              }}
+              className={cn(
+                "flex flex-col items-center gap-2 flex-1 py-4 px-2 rounded-xl border-2 text-xs font-medium transition-all text-center",
+                value === val
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-gray-200 hover:border-primary"
+              )}
+            >
+              <span className="text-lg font-bold">{val}</span>
+              <span className="leading-tight">{label}</span>
+            </button>
+          );
+        })}
       </div>
     );
   }

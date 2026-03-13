@@ -53,7 +53,7 @@ export async function updateQuestion(
   questionId: string,
   data: Partial<{
     title: string;
-    type: "short_text" | "long_text" | "multiple_choice" | "yes_no" | "rating" | "email" | "number" | "date";
+    type: "short_text" | "long_text" | "multiple_choice" | "yes_no" | "rating" | "likert" | "email" | "number" | "date";
     required: boolean;
     settings: Record<string, unknown>;
   }>

@@ -24,6 +24,7 @@ import {
   List,
   Mail,
   Plus,
+  Sliders,
   Star,
   ToggleLeft,
   Trash2,
@@ -37,6 +38,7 @@ type QuestionType =
   | "multiple_choice"
   | "yes_no"
   | "rating"
+  | "likert"
   | "email"
   | "number"
   | "date";
@@ -64,6 +66,7 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   multiple_choice: "Multiple choice",
   yes_no: "Yes / No",
   rating: "Rating",
+  likert: "Likert scale",
   email: "Email",
   number: "Number",
   date: "Date",
@@ -75,6 +78,7 @@ const TYPE_ICONS: Record<QuestionType, React.ReactNode> = {
   multiple_choice: <List className="size-4" />,
   yes_no: <ToggleLeft className="size-4" />,
   rating: <Star className="size-4" />,
+  likert: <Sliders className="size-4" />,
   email: <Mail className="size-4" />,
   number: <Hash className="size-4" />,
   date: <Calendar className="size-4" />,
@@ -325,6 +329,16 @@ export default function FormBuilder({
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Likert info */}
+              {selected.type === "likert" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Scale labels
+                  </label>
+                  <p className="text-xs text-gray-400">5-point scale: Strongly Disagree → Strongly Agree</p>
                 </div>
               )}
 
