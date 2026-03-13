@@ -13,6 +13,7 @@ type QuestionType =
   | "multiple_choice"
   | "yes_no"
   | "rating"
+  | "likert"
   | "email"
   | "number"
   | "date";
