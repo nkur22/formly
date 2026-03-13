@@ -43,7 +43,7 @@ export default async function LandingPage() {
           <Link href="/login" className={buttonVariants({ size: "lg" })}>
             Start for free
           </Link>
-          <Link href="#" className={cn(buttonVariants({ size: "lg", variant: "outline" }))}>
+          <Link href="/examples" className={cn(buttonVariants({ size: "lg", variant: "outline" }))}>
             See examples
           </Link>
         </div>
